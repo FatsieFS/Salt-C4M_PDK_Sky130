@@ -32,10 +32,10 @@ capm = input(89, 44)
 m3_pin = input(70, 16)
 m3_block = input(100, 100)
 m3 = input(70, 20)
+cap2m = input(97, 44)
 m4_pin = input(71, 16)
 m4_block = input(100, 120)
 m4 = input(71, 20)
-cap2m = input(97, 44)
 m5_pin = input(72, 16)
 m5_block = input(100, 140)
 m5 = input(72, 20)
@@ -53,11 +53,11 @@ via3 = input(70, 44)
 via4 = input(71, 44)
 areaid_sc = input(81, 4)
 pad = input(76, 20)
-npn = input(82, 20)
-diffres = input(65, 13)
-polyres = input(66, 13)
-pnp = input(82, 44)
 areaid_diode = input(81, 23)
+npn = input(82, 20)
+polyres = input(66, 13)
+diffres = input(65, 13)
+pnp = input(82, 44)
 prBoundary = input(235, 4)
 substrate__Sky130 = (extent.sized(0.34)-nwm)
 poly__conn = (poly-polyres)
@@ -77,15 +77,15 @@ gate__mosfet__pfet_01v8 = (gate__mosgate&amp;psdm&amp;nwm)
 gate__mosfet__pfet_01v8_hvt = (gate__mosgate&amp;psdm&amp;hvtp&amp;nwm)
 gate__mosfet__pfet_01v8_lvt = (gate__mosgate&amp;psdm&amp;lvtn&amp;nwm)
 gate__mosfet__pfet_g5v0d10v5 = (gate__hvmosgate&amp;psdm&amp;nwm)
+resistor__ndiff_res = (difftap&amp;diffres&amp;nsdm)
+indicators__resistor__ndiff_res = (diffres)
+body__resistor__ndiff_res = (resistor__ndiff_res&amp;indicators__resistor__ndiff_res)
 resistor__poly_res = (poly&amp;polyres)
 indicators__resistor__poly_res = (polyres)
 body__resistor__poly_res = (resistor__poly_res&amp;indicators__resistor__poly_res)
 resistor__pdiff_res = (difftap&amp;diffres&amp;nsdm)
 indicators__resistor__pdiff_res = (diffres)
 body__resistor__pdiff_res = (resistor__pdiff_res&amp;indicators__resistor__pdiff_res)
-resistor__ndiff_res = (difftap&amp;diffres&amp;nsdm)
-indicators__resistor__ndiff_res = (diffres)
-body__resistor__ndiff_res = (resistor__ndiff_res&amp;indicators__resistor__ndiff_res)
 mimcap__MIM_m3_capm = capm
 mimcap__MIM_m4_cap2m = cap2m
 diode__pdiode = (difftap&amp;areaid_diode&amp;psdm)
@@ -151,6 +151,11 @@ connect(cap2m, via4)
 connect(via4, m5)
 
 # Resistors
+# ndiff_res
+extract_devices(resistor("ndiff_res", 120.0), {
+    "R" =&gt; resistor__ndiff_res, "C" =&gt; difftap__conn,
+})
+same_device_classes("ndiff_res", "RES")
 # poly_res
 extract_devices(resistor("poly_res", 48.2), {
     "R" =&gt; resistor__poly_res, "C" =&gt; poly__conn,
@@ -161,11 +166,6 @@ extract_devices(resistor("pdiff_res", 197.0), {
     "R" =&gt; resistor__pdiff_res, "C" =&gt; difftap__conn,
 })
 same_device_classes("pdiff_res", "RES")
-# ndiff_res
-extract_devices(resistor("ndiff_res", 120.0), {
-    "R" =&gt; resistor__ndiff_res, "C" =&gt; difftap__conn,
-})
-same_device_classes("ndiff_res", "RES")
 
 # Diodes
 # pdiode
