@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR GPL-2.0-or-later OR CERN-OHL-S-2.0+ OR Apache-2.0
-from typing import cast
+from typing import Optional, Any, cast
 
 from pdkmaster.technology import property_ as _prp, primitive as _prm
 from pdkmaster.design import circuit as _ckt, layout as _lay, library as _lbry
-from pdkmaster.io.klayout import merge
 
 from c4m.flexio import IOSpecification, TrackSpecification, IOFrameSpecification, IOFactory
 
@@ -77,9 +76,15 @@ class Sky130IOFactory(IOFactory):
         )
 
 
-iolib = _lbry.Library(name="IOLib", tech=tech)
-_iofab = Sky130IOFactory(lib=iolib, cktfab=cktfab, layoutfab=layoutfab)
-# Generate the gallery and layout of all subcells. Layout generation is done so all
-# cells exist in the library before merge is called.
-_iofab.get_cell("Gallery").layout
-merge(iolib)
+_iolib: Optional[_lbry.Library] = None
+iolib: _lbry.Library
+def __getattr__(name: str) -> Any:
+    if name == "iolib":
+        global _iolib
+        if _iolib is None:
+            _iolib = _lbry.Library(name="IOLib", tech=tech)
+            _iofab = Sky130IOFactory(lib=_iolib, cktfab=cktfab, layoutfab=layoutfab)
+            _iofab.get_cell("Gallery").circuit
+        return _iolib
+    else:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

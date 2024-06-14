@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR GPL-2.0-or-later OR CERN-OHL-S-2.0+ OR Apache-2.0
-from typing import cast
+from typing import Optional, Any, cast
 
 from pdkmaster.technology import (
     property_ as _prp, geometry as _geo, primitive as _prm, technology_ as _tch,
@@ -7,7 +7,6 @@ from pdkmaster.technology import (
 from pdkmaster.design import (
     circuit as _ckt, layout as _lay, cell as _cell, library as _lbry,
 )
-from pdkmaster.io.klayout import merge
 
 from . import tech, cktfab, layoutfab
 _prims = tech.primitives
@@ -725,23 +724,29 @@ class _PNP_05v5_W3u40L3u40(_cell.Cell):
         layouter.add_portless(prim=bnd, shape=shape)
 
 
-macrolib = _lbry.Library(name="MacroLib", tech=tech)
-macrolib.cells += (
-    _NPN_05v5_W1u00L1u00(
-        name="NPN_05v5_W1u00L1u00",
-        tech=tech, cktfab=cktfab, layoutfab=layoutfab,
-    ),
-    _NPN_05v5_W1u00L2u00(
-        name="NPN_05v5_W1u00L2u00",
-        tech=tech, cktfab=cktfab, layoutfab=layoutfab,
-    ),
-    _PNP_05v5_W0u68L0u68(
-        name="PNP_05v5_W0u68L0u68",
-        tech=tech, cktfab=cktfab, layoutfab=layoutfab,
-    ),
-    _PNP_05v5_W3u40L3u40(
-        name="PNP_05v5_W3u40L3u40",
-        tech=tech, cktfab=cktfab, layoutfab=layoutfab,
-    ),
-)
-merge(macrolib)
+_macrolib: Optional[_lbry.Library] = None
+macrolib: _lbry.Library
+def __getattr__(name: str) -> Any:
+    if name == "macrolib":
+        global _macrolib
+        if _macrolib is None:
+            _macrolib = _lbry.Library(name="MacroLib", tech=tech)
+            _macrolib.cells += (
+                _NPN_05v5_W1u00L1u00(
+                    name="NPN_05v5_W1u00L1u00",
+                    tech=tech, cktfab=cktfab, layoutfab=layoutfab,
+                ),
+                _NPN_05v5_W1u00L2u00(
+                    name="NPN_05v5_W1u00L2u00",
+                    tech=tech, cktfab=cktfab, layoutfab=layoutfab,
+                ),
+                _PNP_05v5_W0u68L0u68(
+                    name="PNP_05v5_W0u68L0u68",
+                    tech=tech, cktfab=cktfab, layoutfab=layoutfab,
+                ),
+                _PNP_05v5_W3u40L3u40(
+                    name="PNP_05v5_W3u40L3u40",
+                    tech=tech, cktfab=cktfab, layoutfab=layoutfab,
+                ),
+            )
+        return _macrolib
