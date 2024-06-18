@@ -5,7 +5,6 @@ from pdkmaster.technology import (
     property_ as prp, mask as msk, primitive as prm, technology_ as tch
 )
 from pdkmaster.design import layout as lay, circuit as ckt
-from pdkmaster.io import notebook as nb
 
 __all__ = [
     "tech", "technology", "layoutfab", "layout_factory",
@@ -512,15 +511,27 @@ gds_layers = {
     # "li_rs": (67, 13),
     # "cfom": (22, 20),
 }
-plotter = nb.Plotter({
-    # "pwell": {"fc": (1.0, 1.0, 0.0, 0.2), "ec": "orange", "zorder": 10},
-    "nwm": {"fc": (0.0, 0.0, 0.0, 0.1), "ec": "grey", "zorder": 10},
-    "difftap": {"fc": "lawngreen", "ec": "lawngreen", "zorder": 11},
-    "poly": {"fc": "red", "ec": "red", "zorder": 12},
-    "nsdm": {"fc": "purple", "ec": "purple", "alpha": 0.3, "zorder": 13},
-    "psdm": {"fc": "blueviolet", "ec": "blueviolet", "alpha": 0.3, "zorder": 13},
-    "lvtn": {"fc": (0.0, 0.0, 0.0, 0.0), "ec": "grey", "zorder": 13},
-    "hvtp": {"fc": (1, 1, 1, 0.3), "ec": "whitesmoke", "zorder": 13},
-    "licon": {"fc": "black", "ec": "black", "zorder": 14},
-    "li": {"fc": (0.1, 0.1, 1, 0.4), "ec": "blue", "zorder": 15},
-})
+
+
+# Use __getattr__ for plotter so io.notebook is only imported when used.
+_plotter = None
+def __getattr__(name: str):
+    if name == "plotter":
+        global _plotter
+        if _plotter is None:
+            from pdkmaster.io import notebook as nb
+            _plotter = nb.Plotter({
+                # "pwell": {"fc": (1.0, 1.0, 0.0, 0.2), "ec": "orange", "zorder": 10},
+                "nwm": {"fc": (0.0, 0.0, 0.0, 0.1), "ec": "grey", "zorder": 10},
+                "difftap": {"fc": "lawngreen", "ec": "lawngreen", "zorder": 11},
+                "poly": {"fc": "red", "ec": "red", "zorder": 12},
+                "nsdm": {"fc": "purple", "ec": "purple", "alpha": 0.3, "zorder": 13},
+                "psdm": {"fc": "blueviolet", "ec": "blueviolet", "alpha": 0.3, "zorder": 13},
+                "lvtn": {"fc": (0.0, 0.0, 0.0, 0.0), "ec": "grey", "zorder": 13},
+                "hvtp": {"fc": (1, 1, 1, 0.3), "ec": "whitesmoke", "zorder": 13},
+                "licon": {"fc": "black", "ec": "black", "zorder": 14},
+                "li": {"fc": (0.1, 0.1, 1, 0.4), "ec": "blue", "zorder": 15},
+            })
+        return _plotter
+    else:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

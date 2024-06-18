@@ -8,7 +8,8 @@ from pdkmaster.design import (
     circuit as _ckt, layout as _lay, cell as _cell, library as _lbry,
 )
 
-from . import tech, cktfab, layoutfab
+from .pdkmaster import tech, cktfab, layoutfab
+
 _prims = tech.primitives
 
 

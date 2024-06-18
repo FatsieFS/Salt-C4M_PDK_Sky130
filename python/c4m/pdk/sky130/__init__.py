@@ -6,8 +6,6 @@ from pdkmaster.design import library as _lbry
 
 from c4m.flexcell import factory as _stdfab
 
-from .pdkmaster import *
-from .pyspice import *
 from .klayout import register_primlib as pya_register_primlib
 
 
@@ -35,7 +33,13 @@ iolib: _lbry.Library
 macrolib: _lbry.Library
 libs: List[_lbry.Library]
 def __getattr__(name: str) -> Any:
-    if name in _stdcell_all:
+    if name in _pdkmaster_all:
+        pdkmaster = import_module(".pdkmaster", __name__)
+        return getattr(pdkmaster, name)
+    elif name in _pyspice_all:
+        pyspice = import_module(".pyspice", __name__)
+        return getattr(pyspice, name)
+    elif name in _stdcell_all:
         stdcell = import_module(".stdcell", __name__)
         return getattr(stdcell, name)
     elif name in _io_all:
