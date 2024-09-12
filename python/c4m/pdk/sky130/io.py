@@ -7,7 +7,7 @@ from pdkmaster.design import circuit as _ckt, layout as _lay, library as _lbry
 from c4m.flexio import IOSpecification, TrackSpecification, IOFrameSpecification, IOFactory
 
 from .pdkmaster import tech, cktfab, layoutfab
-from .stdcell import stdcelllib
+
 
 __all__ = ["Sky130IOFactory", "iolib"]
 
@@ -15,9 +15,35 @@ __all__ = ["Sky130IOFactory", "iolib"]
 _prims = tech.primitives
 
 
+# IO needs taller cells at the moment and we use lambda rule derived dimensions for that.
+# TODO: make IOFactory able to handle smaller height cells
+# see https://gitlab.com/Chips4Makers/c4m-flexio/-/issues/3
+from c4m.flexcell import factory as _stdfab
+_iostdcellcanvas = _stdfab.StdCellCanvas(
+    tech=tech, **_stdfab.StdCellCanvas.compute_dimensions_lambda(lambda_=0.05),
+    nmos=cast(_prm.MOSFET, _prims.nfet_01v8), pmos=cast(_prm.MOSFET, _prims.pfet_01v8),
+)
+_iostdcelllib = _lbry.RoutingGaugeLibrary(
+    name="_IOStdCellLib", tech=tech, routinggauge=_iostdcellcanvas.routinggauge,
+)
+
+class StdCellLambdaFactory(_stdfab.StdCellFactory):
+    def __init__(self, *,
+        lib: _lbry.RoutingGaugeLibrary,
+        name_prefix: str = "", name_suffix: str = "",
+    ):
+        super().__init__(
+            lib=lib, cktfab=cktfab, layoutfab=layoutfab,
+            name_prefix=name_prefix, name_suffix=name_suffix,
+            canvas=_iostdcellcanvas,
+        )
+_iostdcellfab = StdCellLambdaFactory(lib=_iostdcelllib)
+_iostdcellfab.add_default()
+
+
 class Sky130IOFactory(IOFactory):
     iospec = IOSpecification(
-        stdcelllib=stdcelllib,
+        stdcelllib=_iostdcelllib,
         nmos=cast(_prm.MOSFET, _prims.nfet_01v8), pmos=cast(_prm.MOSFET, _prims.pfet_01v8),
         ionmos=cast(_prm.MOSFET, _prims.nfet_g5v0d10v5),
         iopmos=cast(_prm.MOSFET, _prims.pfet_g5v0d10v5),

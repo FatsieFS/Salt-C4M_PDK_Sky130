@@ -14,32 +14,33 @@ from .klayout import register_primlib as pya_register_primlib
 
 
 from .pdkmaster import __all__ as _pdkmaster_all
+from .spice import __all__ as _spice_all
 from .pyspice import __all__ as _pyspice_all
 from .stdcell import __all__ as _stdcell_all
 from .io import __all__ as _io_all
 from .factory import __all__ as _factory_all
 
-__all__ = [*_pdkmaster_all, *_pyspice_all, *_stdcell_all, *_io_all, *_factory_all]
+__all__ = [
+    *_pdkmaster_all, *_spice_all, *_pyspice_all, *_stdcell_all, *_io_all, *_factory_all, # pyright: ignore
+]
+
+from .pdkmaster import *
+from .spice import *
+from .pyspice import *
 
 
 StdCellFactory: type
 stdcellcanvas: _stdfab.StdCellCanvas
 stdcelllib: _lbry.RoutingGaugeLibrary
-StdCellLambdaFactory: type
-stdcelllambdacanvas: _stdfab.StdCellCanvas
-stdcelllib: _lbry.RoutingGaugeLibrary
+StdCell5V0Factory: type
+stdcell5v0canvas: _stdfab.StdCellCanvas
+stdcell5v0lib: _lbry.RoutingGaugeLibrary
 Sky130IOFactory: type
 iolib: _lbry.Library
 macrolib: _lbry.Library
 libs: List[_lbry.Library]
 def __getattr__(name: str) -> Any:
-    if name in _pdkmaster_all:
-        pdkmaster = import_module(".pdkmaster", __name__)
-        return getattr(pdkmaster, name)
-    elif name in _pyspice_all:
-        pyspice = import_module(".pyspice", __name__)
-        return getattr(pyspice, name)
-    elif name in _stdcell_all:
+    if name in _stdcell_all:
         stdcell = import_module(".stdcell", __name__)
         return getattr(stdcell, name)
     elif name in _io_all:
@@ -49,11 +50,11 @@ def __getattr__(name: str) -> Any:
         factory = import_module(".factory", __name__)
         return getattr(factory, name)
     elif name == "libs":
-        from .stdcell import stdcelllib
+        from .stdcell import stdcelllib, stdcell5v0lib
         from .io import iolib
         from .factory import macrolib
         return [
-            stdcelllib,
+            stdcelllib, stdcell5v0lib,
             iolib,
             macrolib,
         ]

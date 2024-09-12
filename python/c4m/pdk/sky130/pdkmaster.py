@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR GPL-2.0-or-later OR CERN-OHL-S-2.0+ OR Apache-2.0
 from typing import Dict
 
+from pdkmaster.typing import GDSLayerSpecDict
 from pdkmaster.technology import (
-    property_ as prp, mask as msk, primitive as prm, technology_ as tch
+    property_ as prp, primitive as prm, technology_ as tch
 )
 from pdkmaster.design import layout as lay, circuit as ckt
 
 __all__ = [
     "tech", "technology", "layoutfab", "layout_factory",
-    "cktfab", "circuit_factory", "gds_layers", "plotter",
+    "cktfab", "circuit_factory", "gds_layers",
+    "plotter", # pyright: ignore
 ]
 
 
@@ -100,13 +102,17 @@ class _Sky130(tch.Technology):
             implant_abut="all", # n/ psd.6
             allow_contactless_implant=False,
             min_well_enclosure=prp.Enclosure(0.180), # difftap.8+10
+            min_well_enclosure4oxide={
+                hvi: prp.Enclosure(0.33), # hvdifftap.17+19
+            },
             min_substrate_enclosure=prp.Enclosure(0.340), # difftap.9
-            # TODO: implement min_(substrate/well)_enclosure_same_type
-            # min_substrate_enclosure_same_type=prp.Enclosure(0.130), # difftap.11
+            min_substrate_enclosure4oxide={
+                hvi: prp.Enclosure(0.43), # hvdifftap.18+20
+            },
+            min_substrate_enclosure_same_type=prp.Enclosure(0.130), # difftap.11
             allow_well_crossing=False,
             oxide=hvi,
             min_oxide_enclosure=prp.Enclosure(0.180) # hvdifftap.21/22
-            # Min. width/space of active in hvi; hvdifftap.14/15a
         )
         poly = prm.GateWire(name="poly",
             pin=pin_prims["poly"], blockage=block_prims["poly"],
@@ -302,6 +308,10 @@ class _Sky130(tch.Technology):
                 indicator=areaid_diode, min_indicator_enclosure=prp.Enclosure(self.grid),
             ),
 
+            # extra width rules
+            prm.MinWidth( # hvdifftap.14
+                prim=difftap.in_(hvi), min_width=0.29,
+            ),
             # extra space rules
             prm.Spacing( # poly.4
                 primitives1=difftap, primitives2=poly, min_space=0.075,
@@ -313,11 +323,14 @@ class _Sky130(tch.Technology):
             prm.Spacing( # licon.14
                 primitives1=vias["licon"], primitives2=difftap, min_space=0.190,
             ),
-            prm.Spacing( # difftap.9
-                primitives1=difftap, primitives2=nwm, min_space=0.340,
-            ),
             prm.Spacing( # hvdifftap.15a
                 primitives1=difftap.in_(hvi), min_space=0.300,
+            ),
+            prm.Spacing( # hvdifftap.15b
+                primitives1=difftap.in_((hvi, implants["nsdm"])),
+                primitives2=difftap.in_((hvi, implants["psdm"])),
+                min_space=0.370,
+                allow_abut=True,
             ),
             prm.Spacing( # hvdifftap.23
                 primitives1=difftap, primitives2=hvi, min_space=0.180,
@@ -390,7 +403,7 @@ class _Sky130(tch.Technology):
 tech = technology = _Sky130()
 cktfab = circuit_factory = ckt.CircuitFactory(tech=tech)
 layoutfab = layout_factory = lay.LayoutFactory(tech=tech)
-gds_layers = {
+gds_layers: GDSLayerSpecDict = {
     # For li/metal layer we fix datatype to 20
     # Custom layers:
     # There is descrepancy between klayout DRC script and magic tech file in layer
